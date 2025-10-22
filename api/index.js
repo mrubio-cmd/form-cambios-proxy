@@ -10,17 +10,16 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') return res.status(204).end();
 
-    // Construir request upstream
+    // Request upstream
     const init = { method: req.method, headers: { 'user-agent': 'vercel-proxy' } };
     if (!['GET', 'HEAD'].includes(req.method)) {
       const chunks = [];
-      for await (const chunk of req) chunks.push(chunk);
+      for await (const c of req) chunks.push(c);
       init.body = Buffer.concat(chunks);
-      const ct = req.headers['content-type'] || 'application/json';
-      init.headers['content-type'] = ct;
+      init.headers['content-type'] = req.headers['content-type'] || 'application/json';
     }
 
-    // Copiar querystring original
+    // Querystring original
     const inUrl = new URL(req.url, `https://${req.headers.host}`);
     const outUrl = new URL(APP_URL);
     outUrl.search = inUrl.search;
@@ -31,18 +30,17 @@ module.exports = async function handler(req, res) {
     const text = await upstream.text();
     const ctUp = (headers['content-type'] || '').toLowerCase();
 
-    // --- MODO DEBUG: si pasas ?debug=1 devolvemos diagnóstico en JSON ---
+    // DEBUG: /api?debug=1
     if (inUrl.searchParams.get('debug') === '1') {
       return res.status(200).json({
         ok: true,
         upstreamStatus: status,
         upstreamContentType: headers['content-type'] || null,
         upstreamLength: text.length,
-        head: text.slice(0, 400) // primeros 400 chars
+        head: text.slice(0, 400)
       });
     }
 
-    // Respuesta normal
     res.status(status);
     if (ctUp.includes('application/json')) {
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -52,7 +50,6 @@ module.exports = async function handler(req, res) {
     return res.send(text);
 
   } catch (err) {
-    console.error('Proxy error:', err);
     return res.status(500).json({ ok:false, error:'Proxy failed', detail: String(err?.message || err) });
   }
 };
