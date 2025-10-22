@@ -1,7 +1,12 @@
-export default async function handler(req, res) {
-  // ⬇️ Pega aquí tu URL pública del Apps Script (termina en /exec)
-  const APP_URL = 'AKfycbw69hWYjh6TF4sHWGzz_f2kl5vDwwunvPtPcLQ8naz2OIPYWic0X8K64a1ZfCbD5Lt-';
+// Runtime válido para Vercel
+export const config = { runtime: 'nodejs18.x' };
 
+export default async function handler(req, res) {
+  // URL pública del Web App (con tu deployment ID + /exec)
+  const APP_URL =
+    'https://script.google.com/macros/s/AKfycbw69NhY3h6TF4sHWgz_f2k15vDwuvnvPtPcLQ8na2Z01PYwiC0X8K64a1zFCbDSLt-/exec';
+
+  // Conserva querystring
   const inUrl = new URL(req.url, `https://${req.headers.host}`);
   const outUrl = new URL(APP_URL);
   outUrl.search = inUrl.search;
@@ -15,7 +20,7 @@ export default async function handler(req, res) {
     redirect: 'follow'
   };
 
-  if (!['GET','HEAD'].includes(req.method)) {
+  if (!['GET', 'HEAD'].includes(req.method)) {
     const buf = await buffer(req);
     init.body = buf;
   }
@@ -27,6 +32,7 @@ export default async function handler(req, res) {
       res.setHeader(k, v);
     }
   }
+
   res.status(resp.status);
   const arr = await resp.arrayBuffer();
   res.send(Buffer.from(arr));
@@ -40,3 +46,4 @@ function buffer(req) {
     req.on('error', reject);
   });
 }
+
