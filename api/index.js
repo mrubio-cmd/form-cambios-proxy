@@ -1,7 +1,6 @@
 export const config = { runtime: 'nodejs18.x' };
 
 export default async function handler(req, res) {
-  // URL pública de tu Web App (termina en /exec)
   const APP_URL =
     'https://script.google.com/macros/s/AKfycbw69NhY3h6TF4sHWgz_f2k15vDwuvnvPtPcLQ8na2Z01PYwiC0X8K64a1zFCbDSLt-/exec';
 
@@ -42,3 +41,4 @@ function buffer(req) {
     req.on('error', reject);
   });
 }
+
