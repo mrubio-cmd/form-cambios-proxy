@@ -1,27 +1,18 @@
-// /api/index.js  — Vercel Serverless Function (CommonJS)
+// /api/index.js — Vercel Serverless (CommonJS)
 module.exports = async function handler(req, res) {
   try {
-    // Tu Web App de Apps Script (debe terminar en /exec)
     const APP_URL = 'https://script.google.com/macros/s/AKfycbylpo_b35stQ9XsbSUxcUA-4Log6moe8WvdCotaQX1NPB7n-XU6zAv9Kafr5vqmsa8M/exec';
 
-    // Preflight CORS (por si algún cliente hace OPTIONS)
+    // CORS básico
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Max-Age', '86400');
     if (req.method === 'OPTIONS') return res.status(204).end();
 
-    // Construir init y body solo cuando corresponde
-    const init = {
-      method: req.method,
-      headers: {
-        'user-agent': 'vercel-proxy'
-      }
-    };
-
+    // Construir request upstream
+    const init = { method: req.method, headers: { 'user-agent': 'vercel-proxy' } };
     if (!['GET', 'HEAD'].includes(req.method)) {
-      // Solo enviamos Content-Type si hay body
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
       init.body = Buffer.concat(chunks);
@@ -29,27 +20,30 @@ module.exports = async function handler(req, res) {
       init.headers['content-type'] = ct;
     }
 
-    // Mantener querystring original
+    // Copiar querystring original
     const inUrl = new URL(req.url, `https://${req.headers.host}`);
     const outUrl = new URL(APP_URL);
-    outUrl.search = inUrl.search; // copia ?a=1&b=2
+    outUrl.search = inUrl.search;
 
-    // Llamar al Apps Script
     const upstream = await fetch(outUrl.toString(), init);
-
-    // Propagar headers útiles y status
-    res.status(upstream.status);
-    upstream.headers.forEach((value, key) => {
-      // Evita duplicar headers de control hop-by-hop si hiciera falta
-      if (!['content-encoding', 'transfer-encoding'].includes(key)) {
-        res.setHeader(key, value);
-      }
-    });
-
+    const ctUp = (upstream.headers.get('content-type') || '').toLowerCase();
     const text = await upstream.text();
-    res.send(text);
+
+    // Devolución: solo fijamos el Content-Type correcto y el status
+    res.status(upstream.status);
+
+    if (ctUp.includes('application/json')) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.send(text);
+    }
+
+    // Para HTML y cualquier otra cosa, forzamos HTML (evita headers que “rompen”)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(text);
+
   } catch (err) {
-    console.error('Error en el proxy:', err);
-    res.status(500).send('Error interno en el proxy: ' + (err && err.message ? err.message : String(err)));
+    console.error('Proxy error:', err);
+    return res.status(500).send('Error interno en el proxy: ' + (err?.message || String(err)));
   }
 };
+
