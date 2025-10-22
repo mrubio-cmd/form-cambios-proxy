@@ -1,42 +1,43 @@
 export default async function handler(req, res) {
-  const APP_URL =
-    'https://script.google.com/macros/s/AKfycbw69NhY3h6TF4sHWgz_f2k15vDwuvnvPtPcLQ8na2Z01PYwiC0X8K64a1zFCbDSLt-/exec';
+  try {
+    // URL de tu Apps Script Web App (termina en /exec)
+    const APP_URL =
+      'https://script.google.com/macros/s/AKfycbw69NHY3h6Tf4sHWgz_f2k15vDuvvmvPtPcLQ8na2Z01PYwiC0X8K64a1zFCbDSLt-/exec';
 
-  const inUrl = new URL(req.url, `https://${req.headers.host}`);
-  const outUrl = new URL(APP_URL);
-  outUrl.search = inUrl.search;
+    // Clona el método y los headers
+    const init = {
+      method: req.method,
+      headers: {
+        'content-type': req.headers['content-type'] || 'application/json',
+        'user-agent': 'vercel-proxy',
+      },
+    };
 
-  const init = {
-    method: req.method,
-    headers: {
-      'content-type': req.headers['content-type'] || undefined,
-      'user-agent': req.headers['user-agent'] || 'vercel-proxy'
-    },
-    redirect: 'follow'
-  };
+    // Si no es GET o HEAD, incluye el cuerpo
+    if (!['GET', 'HEAD'].includes(req.method)) {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      init.body = Buffer.concat(chunks);
+    }
 
-  if (!['GET','HEAD'].includes(req.method)) {
-    const buf = await buffer(req);
-    init.body = buf;
+    // Construye la URL con querystring original
+    const inUrl = new URL(req.url, `https://${req.headers.host}`);
+    const outUrl = new URL(APP_URL);
+    outUrl.search = inUrl.search;
+
+    // Realiza la petición al Apps Script
+    const response = await fetch(outUrl.toString(), init);
+
+    // Copia las cabeceras y estado de respuesta
+    res.status(response.status);
+    for (const [key, value] of response.headers) {
+      res.setHeader(key, value);
+    }
+
+    const data = await response.text();
+    res.send(data);
+  } catch (err) {
+    console.error('Error en el proxy:', err);
+    res.status(500).send('Error interno en el proxy: ' + err.message);
   }
-
-  const resp = await fetch(outUrl.toString(), init);
-
-  for (const [k, v] of resp.headers) {
-    if (!['content-security-policy'].includes(k.toLowerCase())) res.setHeader(k, v);
-  }
-
-  res.status(resp.status);
-  const arr = await resp.arrayBuffer();
-  res.send(Buffer.from(arr));
 }
-
-function buffer(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on('data', c => chunks.push(c));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
-}
-
