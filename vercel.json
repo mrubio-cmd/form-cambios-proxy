@@ -1,8 +1,7 @@
 {
   "version": 2,
   "routes": [
-    { "src": "^/$", "dest": "/api/index" },
     { "src": "^/api(?:/index)?$", "dest": "/api/index" },
-    { "src": "^/api/ping$", "dest": "/api/ping" }
+    { "src": "^/$", "dest": "/api/index" }
   ]
 }
