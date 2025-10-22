@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   try {
     // URL de tu Apps Script Web App (termina en /exec)
     const APP_URL =
-      'https://script.google.com/macros/s/AKfycbw69NHY3h6Tf4sHWgz_f2k15vDuvvmvPtPcLQ8na2Z01PYwiC0X8K64a1zFCbDSLt-/exec';
+      'https://script.google.com/macros/s/AKfycbx0xPG3QeeYXhAN_KWR89gwZcEIAwhLVGbm9wk3SPvYzFTgOjDEwDguiWvc7tzH4FMQ/exec';
 
     // Clona el método y los headers
     const init = {
