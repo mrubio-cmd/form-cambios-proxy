@@ -1,6 +1,6 @@
 // /api/index.js — Reverse proxy para Apps Script manteniendo TU dominio visible
 // CommonJS para Vercel
-const APP_URL = 'https://script.google.com/macros/s/AKfycbylpo_b35stQ9XsbSUxcUA-4Log6moe8WvdCotaQX1NPB7n-XU6zAv9Kafr5vqmsa8M/exec';
+const APP_URL = 'https://script.google.com/macros/s/AKfycbyDygGF0kY4MrqEAuqLoVvVj2DH1nnZq2_1YDHdUQWZTXWVeUQex_lFRtff806Z4abn/exec';
 
 function buildTargetUrl(req) {
   const inUrl = new URL(req.url, `https://${req.headers.host}`);
