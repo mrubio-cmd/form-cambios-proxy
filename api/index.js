@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   // ⬇️ Pega aquí tu URL pública del Apps Script (termina en /exec)
-  const APP_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+  const APP_URL = 'AKfycbw69hWYjh6TF4sHWGzz_f2kl5vDwwunvPtPcLQ8naz2OIPYWic0X8K64a1ZfCbD5Lt-';
 
   const inUrl = new URL(req.url, `https://${req.headers.host}`);
   const outUrl = new URL(APP_URL);
